@@ -17,7 +17,10 @@ namespace Checkme.BL
 
         public void AddList(CheckList list)
         {
-            Lists.TryAdd(list.Id, list);
+            if(!Lists.TryAdd(list.Id, list))
+            {
+                throw new Exception("Item already exists");
+            }
         }
 
         public void AddItemToList(Guid listId, string word)
