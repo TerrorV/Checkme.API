@@ -67,12 +67,12 @@ namespace Checkme.BL
 
         public void UpdateItem(Guid listId, string word, ItemState state)
         {
-            if (state == ItemState.Done)
+            if (state == ItemState.Done && Lists[listId].Outstanding.Contains(word))
             {
                 Lists[listId].Outstanding.Remove(word);
                 Lists[listId].Done.Add(word);
             }
-            else if (state == ItemState.Outstanding)
+            else if (state == ItemState.Outstanding && Lists[listId].Done.Contains(word))
             {
                 Lists[listId].Done.Remove(word);
                 Lists[listId].Outstanding.Add(word);
