@@ -1,4 +1,5 @@
 ﻿using Checkme.BL.Abstract;
+using Checkme.BL.Abstract.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -61,6 +62,11 @@ namespace Checkme.API.Controllers
                 list.Id = listId;
                 _listService.AddList(list);
                 return Created($"api/v1/lists/{listId.ToString()}", _listService.GetListById(listId));
+            }
+            catch(ItemExistsException ex2)
+            {
+                return Problem(ex2.Message, statusCode: 409);
+
             }
             catch (Exception ex)
             {
