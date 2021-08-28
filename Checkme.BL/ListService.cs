@@ -1,4 +1,5 @@
 ﻿using Checkme.BL.Abstract;
+using Checkme.BL.Abstract.Exceptions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace Checkme.BL
         {
             if(!Lists.TryAdd(list.Id, list))
             {
-                throw new Exception("Item already exists");
+                throw new  ItemExistsException("Item already exists");
             }
         }
 
@@ -77,6 +78,10 @@ namespace Checkme.BL
                 Lists[listId].Done.Remove(word);
                 Lists[listId].Outstanding.Add(word);
             }
+            else
+            {
+                throw new KeyNotFoundException($"{listId} - {word}");
+            }
         }
 
         public void UpdateItem(Guid listId, string word)
@@ -99,12 +104,14 @@ namespace Checkme.BL
             {
                 var itemIndex = Lists[listId].Outstanding.IndexOf(oldItem);
                 Lists[listId].Outstanding[itemIndex] = newItem;
-            }
-
-            if (Lists[listId].Done.Contains(oldItem))
+            }else if (Lists[listId].Done.Contains(oldItem))
             {
                 var itemIndex = Lists[listId].Done.IndexOf(oldItem);
                 Lists[listId].Done[itemIndex] = newItem;
+            }
+            else
+            {
+                throw new KeyNotFoundException($"{listId} - {oldItem}");
             }
         }
     }
