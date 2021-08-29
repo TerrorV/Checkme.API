@@ -4,6 +4,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Checkme.BL
 {
@@ -18,6 +20,7 @@ namespace Checkme.BL
 
         public void AddList(CheckList list)
         {
+            list.Timestamp = DateTime.Now;
             if(!Lists.TryAdd(list.Id, list))
             {
                 throw new  ItemExistsException("Item already exists");
@@ -32,9 +35,25 @@ namespace Checkme.BL
             }
 
             Lists[listId].Outstanding.Add(word);
+            Lists[listId].Timestamp = DateTime.Now;
         }
 
-        public CheckList GetListById(Guid id)
+        public async Task<CheckList> GetListById(Guid id,DateTime timespan)
+        {
+            if (!Lists.ContainsKey(id))
+            {
+                throw new KeyNotFoundException(id.ToString());
+            }
+
+            while(Lists[id].Timestamp<timespan)
+            {
+                Thread.Sleep(3000);
+            }
+
+            return Lists[id];
+        }
+
+        public async Task<CheckList> GetListById(Guid id)
         {
             if (!Lists.ContainsKey(id))
             {
@@ -64,6 +83,8 @@ namespace Checkme.BL
             {
                 throw new KeyNotFoundException(listId.ToString());
             }
+
+            Lists[listId].Timestamp = DateTime.Now;
         }
 
         public void UpdateItem(Guid listId, string word, ItemState state)
@@ -82,6 +103,8 @@ namespace Checkme.BL
             {
                 throw new KeyNotFoundException($"{listId} - {word}");
             }
+            
+            Lists[listId].Timestamp = DateTime.Now;
         }
 
         public void UpdateItem(Guid listId, string word)
@@ -96,6 +119,8 @@ namespace Checkme.BL
                 Lists[listId].Done.Remove(word);
                 Lists[listId].Outstanding.Add(word);
             }
+
+            Lists[listId].Timestamp = DateTime.Now;
         }
 
         public void EditItem(Guid listId, string oldItem, string newItem)
@@ -113,6 +138,8 @@ namespace Checkme.BL
             {
                 throw new KeyNotFoundException($"{listId} - {oldItem}");
             }
+        
+            Lists[listId].Timestamp = DateTime.Now;
         }
     }
 }

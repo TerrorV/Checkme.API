@@ -23,11 +23,19 @@ namespace Checkme.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Route("{listId}")]
         [HttpGet]
-        public IActionResult GetList([FromRoute] Guid listId)
+        public async Task<IActionResult> GetList([FromRoute] Guid listId, [FromQuery] DateTime timestamp)
         {
             try
             {
-                return Ok(_listService.GetListById(listId));
+                if (timestamp != null)
+                {
+                    return Ok(_listService.GetListById(listId, timestamp).Result);
+                }
+                else
+                {
+                    return Ok(_listService.GetListById(listId).Result);
+                }
+
             }
             catch (Exception)
             {
@@ -53,17 +61,17 @@ namespace Checkme.API.Controllers
         [ProducesResponseType(typeof(CheckList), StatusCodes.Status201Created)]
         //[ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPost]
-        public IActionResult CreateList([FromBody]CheckList list)
+        public IActionResult CreateList([FromBody] CheckList list)
         {
             try
             {
-                Guid listId = list.Id == Guid.Empty ? Guid.NewGuid(): list.Id;
+                Guid listId = list.Id == Guid.Empty ? Guid.NewGuid() : list.Id;
 
                 list.Id = listId;
                 _listService.AddList(list);
                 return Created($"api/v1/lists/{listId.ToString()}", _listService.GetListById(listId));
             }
-            catch(ItemExistsException ex2)
+            catch (ItemExistsException ex2)
             {
                 return Problem(ex2.Message, statusCode: 409);
 
