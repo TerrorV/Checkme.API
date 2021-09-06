@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Checkme.BL.Abstract\Checkme.BL.Abstract.csproj" />
+    <ProjectReference Include="..\Checkme.DAL.Abstract\Checkme.DAL.Abstract.csproj" />
   </ItemGroup>
 
 </Project>

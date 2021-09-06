@@ -50,7 +50,7 @@ namespace Checkme.API.Controllers
         {
             try
             {
-                return Ok(_listService.GetLists());
+                return Ok(_listService.GetLists().Result);
             }
             catch (Exception ex)
             {

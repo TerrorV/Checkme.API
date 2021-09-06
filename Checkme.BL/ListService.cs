@@ -1,8 +1,10 @@
 ﻿using Checkme.BL.Abstract;
 using Checkme.BL.Abstract.Exceptions;
+using Checkme.DAL.Abstract;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,22 +14,26 @@ namespace Checkme.BL
     public class ListService : IListService
     {
         public static ConcurrentDictionary<Guid, CheckList> Lists { get; private set; }
+        private IBlobStorageRepo _blobStorage;
 
-        public ListService()
+        public ListService(IBlobStorageRepo blobStorage)
         {
             Lists = new ConcurrentDictionary<Guid, CheckList>();
+            _blobStorage = blobStorage;
         }
 
-        public void AddList(CheckList list)
+        public async Task AddList(CheckList list)
         {
             list.Timestamp = DateTime.Now;
-            if(!Lists.TryAdd(list.Id, list))
+            if (!Lists.TryAdd(list.Id, list))
             {
-                throw new  ItemExistsException("Item already exists");
+                throw new ItemExistsException("Item already exists");
             }
+
+            _blobStorage.AddResource(list, list.Id.ToString());
         }
 
-        public void AddItemToList(Guid listId, string word)
+        public async Task AddItemToList(Guid listId, string word)
         {
             if (Lists[listId].Outstanding.Contains(word) || Lists[listId].Done.Contains(word))
             {
@@ -38,14 +44,14 @@ namespace Checkme.BL
             Lists[listId].Timestamp = DateTime.Now;
         }
 
-        public async Task<CheckList> GetListById(Guid id,DateTime timespan)
+        public async Task<CheckList> GetListById(Guid id, DateTime timespan)
         {
             if (!Lists.ContainsKey(id))
             {
                 throw new KeyNotFoundException(id.ToString());
             }
 
-            while(Lists[id].Timestamp<timespan)
+            while (Lists[id].Timestamp < timespan)
             {
                 Thread.Sleep(3000);
             }
@@ -64,12 +70,15 @@ namespace Checkme.BL
             //throw new NotImplementedException();
         }
 
-        public IEnumerable<CheckList> GetLists()
+        public async Task<IEnumerable<CheckList>> GetLists()
         {
-            return Lists.Values;
+            var idList = _blobStorage.GetAllResourceIds().Result;
+            ////var listItm = _blobStorage.GetResource<CheckList>(idList.First()).Result;
+            return idList.Select( x =>  _blobStorage.GetResource<CheckList>(x).Result).ToList();
+            //return Lists.Values;
         }
 
-        public void RemoveItemFromList(Guid listId, string word)
+        public async Task RemoveItemFromList(Guid listId, string word)
         {
             if (Lists[listId].Outstanding.Contains(word))
             {
@@ -85,9 +94,10 @@ namespace Checkme.BL
             }
 
             Lists[listId].Timestamp = DateTime.Now;
+            await PersistList(Lists[listId], listId.ToString());
         }
 
-        public void UpdateItem(Guid listId, string word, ItemState state)
+        public async Task UpdateItem(Guid listId, string word, ItemState state)
         {
             if (state == ItemState.Done && Lists[listId].Outstanding.Contains(word))
             {
@@ -103,11 +113,13 @@ namespace Checkme.BL
             {
                 throw new KeyNotFoundException($"{listId} - {word}");
             }
-            
+
             Lists[listId].Timestamp = DateTime.Now;
+
+            await PersistList(Lists[listId], listId.ToString());
         }
 
-        public void UpdateItem(Guid listId, string word)
+        public async Task UpdateItem(Guid listId, string word)
         {
             if (Lists[listId].Outstanding.Contains(word))
             {
@@ -121,15 +133,18 @@ namespace Checkme.BL
             }
 
             Lists[listId].Timestamp = DateTime.Now;
+
+            await PersistList(Lists[listId], listId.ToString());
         }
 
-        public void EditItem(Guid listId, string oldItem, string newItem)
+        public async Task EditItem(Guid listId, string oldItem, string newItem)
         {
-            if(Lists[listId].Outstanding.Contains(oldItem))
+            if (Lists[listId].Outstanding.Contains(oldItem))
             {
                 var itemIndex = Lists[listId].Outstanding.IndexOf(oldItem);
                 Lists[listId].Outstanding[itemIndex] = newItem;
-            }else if (Lists[listId].Done.Contains(oldItem))
+            }
+            else if (Lists[listId].Done.Contains(oldItem))
             {
                 var itemIndex = Lists[listId].Done.IndexOf(oldItem);
                 Lists[listId].Done[itemIndex] = newItem;
@@ -138,8 +153,15 @@ namespace Checkme.BL
             {
                 throw new KeyNotFoundException($"{listId} - {oldItem}");
             }
-        
+
             Lists[listId].Timestamp = DateTime.Now;
+
+            await PersistList(Lists[listId], listId.ToString());
+        }
+
+        public async Task PersistList(CheckList list, string listId)
+        {
+            _blobStorage.SaveBlob(list, $"checkme_{listId}");
         }
     }
 }

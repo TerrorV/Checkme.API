@@ -1,5 +1,7 @@
 using Checkme.BL;
 using Checkme.BL.Abstract;
+using Checkme.DAL.Abstract;
+using Checkme.DAL.Azure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -30,8 +32,14 @@ namespace Checkme.API
             services.AddLogging(config => config.AddConsole());
             services.AddControllers();
             services.AddSingleton<IListService, ListService>();
+            services.AddSingleton<IBlobStorageRepo, BlobStorageRepo>();
+            services.AddSingleton<Config>(new Config()
+            {
+                ConnectionString = "DefaultEndpointsProtocol=https;AccountName=vbrokerblobstorage;AccountKey=+r86vEEQdyQ8NGrheZtYUb/WLbKRIfEeSVpQQ8QVH61UFrnsmtecStAUzTGBecg5BSNMJ4YrBFqU028W6SYA+Q==;EndpointSuffix=core.windows.net",
+                TypeId = "checkme"
+            });
             services.AddSwaggerDocument();
-            services.AddCors(options=> options.AddDefaultPolicy(builder=>builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+            services.AddCors(options => options.AddDefaultPolicy(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -55,7 +63,7 @@ namespace Checkme.API
             });
 
             app.UseOpenApi();
-            
+
             app.UseSwaggerUi3();
         }
     }
