@@ -35,7 +35,7 @@ namespace Checkme.API
             services.AddSingleton<IBlobStorageRepo, BlobStorageRepo>();
             services.AddSingleton<Config>(new Config()
             {
-                ConnectionString = "DefaultEndpointsProtocol=https;AccountName=vbrokerblobstorage;AccountKey=+r86vEEQdyQ8NGrheZtYUb/WLbKRIfEeSVpQQ8QVH61UFrnsmtecStAUzTGBecg5BSNMJ4YrBFqU028W6SYA+Q==;EndpointSuffix=core.windows.net",
+                ConnectionString = Configuration.GetConnectionString("PersistenceConnectionString") ,
                 TypeId = "checkme"
             });
             services.AddSwaggerDocument();
