@@ -42,10 +42,13 @@ namespace Checkme.BL
 
             Lists[listId].Outstanding.Add(word);
             Lists[listId].Timestamp = DateTime.Now;
+
+            PersistList(Lists[listId], listId.ToString());
         }
 
         public async Task<CheckList> GetListById(Guid id, DateTime timespan)
         {
+            var tempList = _blobStorage.GetResource<CheckList>(id.ToString());
             if (!Lists.ContainsKey(id))
             {
                 throw new KeyNotFoundException(id.ToString());
@@ -61,23 +64,42 @@ namespace Checkme.BL
 
         public async Task<CheckList> GetListById(Guid id)
         {
-            if (!Lists.ContainsKey(id))
+            var tempList = _blobStorage.GetResource<CheckList>(id.ToString());
+            if (Lists.ContainsKey(id))
             {
-                throw new KeyNotFoundException(id.ToString());
+                return Lists[id];
+            }
+            else if (tempList != null)
+            {
+                Lists[id] = await tempList;
+                return Lists[id];
             }
 
-            return Lists[id];
-            //throw new NotImplementedException();
+            throw new KeyNotFoundException(id.ToString());
         }
 
         public async Task<IEnumerable<CheckList>> GetLists()
         {
-            var idList = _blobStorage.GetAllResourceIds().Result;
-            ////var listItm = _blobStorage.GetResource<CheckList>(idList.First()).Result;
-            return idList.Select( x =>  _blobStorage.GetResource<CheckList>(x).Result).ToList();
-            //return Lists.Values;
+            await LoadLists();
+
+            return Lists.Values;
         }
 
+        private async Task LoadLists()
+        {
+            var idList = await _blobStorage.GetAllResourceIds();
+
+            var tempLists = idList.Select(x => _blobStorage.GetResource<CheckList>(x).Result).ToList();
+            foreach (var item in tempLists)
+            {
+                Lists[item.Id] = item;
+            }
+        }
+
+        private void LoadListById(Guid id)
+        {
+            Lists[id] = _blobStorage.GetResource<CheckList>(id.ToString()).Result;
+        }
         public async Task RemoveItemFromList(Guid listId, string word)
         {
             if (Lists[listId].Outstanding.Contains(word))
