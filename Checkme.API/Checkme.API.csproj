@@ -11,6 +11,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Checkme.BL.Abstract\Checkme.BL.Abstract.csproj" />
     <ProjectReference Include="..\Checkme.BL\Checkme.BL.csproj" />
+    <ProjectReference Include="..\Checkme.DAL.Abstract\Checkme.DAL.Abstract.csproj" />
+    <ProjectReference Include="..\Checkme.DAL.Azure\Checkme.DAL.Azure.csproj" />
   </ItemGroup>
 
 

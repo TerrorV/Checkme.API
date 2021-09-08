@@ -8,13 +8,12 @@ namespace Checkme.BL.Abstract
     {
         Task<CheckList> GetListById(Guid id);
         Task<CheckList> GetListById(Guid id, DateTime timespan);
-        IEnumerable<CheckList> GetLists();
-        void AddList(CheckList list);
-        void AddItemToList(Guid listId, string word);
-        void RemoveItemFromList(Guid listId, string word);
-        void UpdateItem(Guid listId, string word);
-        void UpdateItem(Guid listId, string word, ItemState state);
-
-        void EditItem(Guid listId, string oldWord, string newWord);
+        Task<IEnumerable<CheckList>> GetLists();
+        Task AddList(CheckList list);
+        Task AddItemToList(Guid listId, string word);
+        Task RemoveItemFromList(Guid listId, string word);
+        Task UpdateItem(Guid listId, string word);
+        Task UpdateItem(Guid listId, string word, ItemState state);
+        Task EditItem(Guid listId, string oldWord, string newWord);
     }
 }

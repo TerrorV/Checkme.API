@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.9.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Checkme.DAL.Abstract\Checkme.DAL.Abstract.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.WindowsAzure.Storage">
+      <HintPath>..\VirtualBroker.DAL.Azure\bin\Debug\Microsoft.WindowsAzure.Storage.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
