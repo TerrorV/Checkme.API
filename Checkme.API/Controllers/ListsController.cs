@@ -69,7 +69,7 @@ namespace Checkme.API.Controllers
 
                 list.Id = listId;
                 await _listService.AddList(list);
-                return Created($"api/v1/lists/{listId.ToString()}", _listService.GetListById(listId));
+                return Created($"api/v1/lists/{listId.ToString()}", await _listService.GetListById(listId));
             }
             catch (ItemExistsException ex2)
             {
