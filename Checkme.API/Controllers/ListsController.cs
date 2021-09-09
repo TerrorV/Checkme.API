@@ -61,14 +61,14 @@ namespace Checkme.API.Controllers
         [ProducesResponseType(typeof(CheckList), StatusCodes.Status201Created)]
         //[ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPost]
-        public IActionResult CreateList([FromBody] CheckList list)
+        public async Task<IActionResult> CreateList([FromBody] CheckList list)
         {
             try
             {
                 Guid listId = list.Id == Guid.Empty ? Guid.NewGuid() : list.Id;
 
                 list.Id = listId;
-                _listService.AddList(list);
+                await _listService.AddList(list);
                 return Created($"api/v1/lists/{listId.ToString()}", _listService.GetListById(listId));
             }
             catch (ItemExistsException ex2)

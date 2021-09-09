@@ -30,7 +30,7 @@ namespace Checkme.BL
                 throw new ItemExistsException("Item already exists");
             }
 
-            _blobStorage.AddResource(list, list.Id.ToString());
+            await _blobStorage.AddResource(list, list.Id.ToString());
         }
 
         public async Task AddItemToList(Guid listId, string word)
