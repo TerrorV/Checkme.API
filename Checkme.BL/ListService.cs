@@ -43,7 +43,7 @@ namespace Checkme.BL
             Lists[listId].Outstanding.Add(word);
             Lists[listId].Timestamp = DateTime.Now;
 
-            PersistList(Lists[listId], listId.ToString());
+            await PersistList(Lists[listId], listId.ToString());
         }
 
         public async Task<CheckList> GetListById(Guid id, DateTime timespan)
