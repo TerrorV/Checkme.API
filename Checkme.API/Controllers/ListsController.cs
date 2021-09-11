@@ -27,7 +27,7 @@ namespace Checkme.API.Controllers
         {
             try
             {
-                if (timestamp != null)
+                if (timestamp != default(DateTime))
                 {
                     return Ok(_listService.GetListById(listId, timestamp).Result);
                 }
