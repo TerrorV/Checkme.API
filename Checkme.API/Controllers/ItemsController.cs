@@ -25,7 +25,7 @@ namespace Checkme.API.Controllers
             try
             {
                 _listService.UpdateItem(listId, item, state);
-                return Accepted($"/api/v1/lists/{listId}/{item}", $"\"{item}\"");
+                return Accepted($"/api/v1/lists/{listId}/{System.Net.WebUtility.UrlEncode(item)}", $"\"{item}\"");
             }
             catch (Exception ex)
             {
@@ -55,7 +55,7 @@ namespace Checkme.API.Controllers
             try
             {
                 _listService.EditItem(listId, oldItem, newItem);
-                return Accepted($"/api/v1/lists/{listId}/{newItem}");
+                return Accepted($"/api/v1/lists/{listId}/{System.Net.WebUtility.UrlEncode(newItem)}");
             }
             catch (Exception ex)
             {
@@ -71,7 +71,7 @@ namespace Checkme.API.Controllers
             try
             {
                 _listService.AddItemToList(listId, item);
-                return Created($"/api/v1/lists/{listId}/{item}", item);
+                return Created($"/api/v1/lists/{listId}/{System.Net.WebUtility.UrlEncode(item)}", item);
             }
             catch (ArgumentException ex)
             {

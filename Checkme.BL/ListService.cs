@@ -46,7 +46,15 @@ namespace Checkme.BL
             Lists[listId].Timestamp = DateTime.Now;
 
             await PersistList(Lists[listId], listId.ToString());
-            OnListUpdated?.Invoke(null, listId);
+            try
+            {
+                OnListUpdated?.Invoke(null, listId);
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
         }
 
         public async Task<CheckList> GetListById(Guid id, DateTime timespan)
