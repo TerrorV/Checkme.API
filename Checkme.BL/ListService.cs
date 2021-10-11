@@ -15,6 +15,7 @@ namespace Checkme.BL
     {
         public static ConcurrentDictionary<Guid, CheckList> Lists { get; private set; }
         private IBlobStorageRepo _blobStorage;
+        event EventHandler<Guid> OnListUpdated;
 
         public ListService(IBlobStorageRepo blobStorage)
         {
@@ -31,19 +32,21 @@ namespace Checkme.BL
             }
 
             await _blobStorage.AddResource(list, list.Id.ToString());
+            OnListUpdated?.Invoke(null, list.Id);
         }
 
         public async Task AddItemToList(Guid listId, string word)
         {
             if (Lists[listId].Outstanding.Contains(word) || Lists[listId].Done.Contains(word))
             {
-                return;
+                throw new ArgumentException(word);
             }
 
             Lists[listId].Outstanding.Add(word);
             Lists[listId].Timestamp = DateTime.Now;
 
             await PersistList(Lists[listId], listId.ToString());
+            OnListUpdated?.Invoke(null, listId);
         }
 
         public async Task<CheckList> GetListById(Guid id, DateTime timespan)
@@ -117,6 +120,7 @@ namespace Checkme.BL
 
             Lists[listId].Timestamp = DateTime.Now;
             await PersistList(Lists[listId], listId.ToString());
+            OnListUpdated?.Invoke(null, listId);
         }
 
         public async Task UpdateItem(Guid listId, string word, ItemState state)
@@ -139,6 +143,7 @@ namespace Checkme.BL
             Lists[listId].Timestamp = DateTime.Now;
 
             await PersistList(Lists[listId], listId.ToString());
+            OnListUpdated?.Invoke(null, listId);
         }
 
         public async Task UpdateItem(Guid listId, string word)
@@ -157,6 +162,7 @@ namespace Checkme.BL
             Lists[listId].Timestamp = DateTime.Now;
 
             await PersistList(Lists[listId], listId.ToString());
+            OnListUpdated?.Invoke(null, listId);
         }
 
         public async Task EditItem(Guid listId, string oldItem, string newItem)
@@ -179,6 +185,35 @@ namespace Checkme.BL
             Lists[listId].Timestamp = DateTime.Now;
 
             await PersistList(Lists[listId], listId.ToString());
+            OnListUpdated?.Invoke(null, listId);
+        }
+        public async Task SubscribeClient(Guid listId, System.IO.Stream stream)
+        {
+            void ListUpdateHandler(object? sender, Guid id)
+            {
+                if (id != listId)
+                    return;
+                stream.WriteAsync(Encoding.UTF8.GetBytes($"data: {System.Text.Json.JsonSerializer.Serialize(Lists[id])}\n\n")).AsTask().Wait();
+                stream.FlushAsync().Wait();
+            }
+
+            OnListUpdated += ListUpdateHandler;
+            OnListUpdated += (sender, id) =>
+            {
+                ListUpdateHandler(sender, id);
+
+            };
+
+            await Task.Run(() =>
+            {
+                for (int i = 0; i < 40; i++)
+                {
+                    stream.WriteAsync(Encoding.UTF8.GetBytes("data: ping\n"));
+                    stream.WriteAsync(UTF8Encoding.UTF8.GetBytes("\n"));
+                    stream.FlushAsync();
+                    Thread.Sleep(30000);
+                }
+            });
         }
 
         public async Task PersistList(CheckList list, string listId)

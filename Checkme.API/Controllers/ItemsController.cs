@@ -73,6 +73,10 @@ namespace Checkme.API.Controllers
                 _listService.AddItemToList(listId, item);
                 return Created($"/api/v1/lists/{listId}/{item}", item);
             }
+            catch (ArgumentException ex)
+            {
+                return Conflict();
+            }
             catch (Exception ex)
             {
                 return NotFound(listId);

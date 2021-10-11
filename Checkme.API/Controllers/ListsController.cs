@@ -19,6 +19,21 @@ namespace Checkme.API.Controllers
             _listService = listService;
         }
 
+
+        [ProducesResponseType(typeof(CheckList), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Route("{listId}/events")]
+        [HttpGet]
+        public async Task GetListEvents([FromRoute] Guid listId)
+        {
+                Response.Headers["Content-Type"] = "text/event-stream";
+                Response.Headers["Cache-Control"] = "no-cache";
+                await _listService.SubscribeClient(listId, Response.Body);
+                ////var response = Response;
+                //response.Body 
+                return;
+        }
+
         [ProducesResponseType(typeof(CheckList), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Route("{listId}")]
@@ -37,8 +52,9 @@ namespace Checkme.API.Controllers
                 }
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine(ex);
                 return NotFound(listId);
             }
         }
