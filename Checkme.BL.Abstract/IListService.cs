@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Checkme.BL.Abstract
@@ -15,5 +16,6 @@ namespace Checkme.BL.Abstract
         Task UpdateItem(Guid listId, string word);
         Task UpdateItem(Guid listId, string word, ItemState state);
         Task EditItem(Guid listId, string oldWord, string newWord);
+        Task SubscribeClient(Guid listId, Stream stream);
     }
 }
