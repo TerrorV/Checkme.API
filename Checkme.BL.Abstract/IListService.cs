@@ -17,5 +17,6 @@ namespace Checkme.BL.Abstract
         Task UpdateItem(Guid listId, string word, ItemState state);
         Task EditItem(Guid listId, string oldWord, string newWord);
         Task SubscribeClient(Guid listId, Stream stream);
+        Task UpdateList(Guid listId, CheckList list);
     }
 }
