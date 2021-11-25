@@ -74,6 +74,22 @@ namespace Checkme.API.Controllers
             }
         }
 
+        [ProducesResponseType(typeof(IEnumerable<CheckList>), StatusCodes.Status202Accepted)]
+        [Route("{listId}")]
+        [HttpPut]
+        public async Task<IActionResult> UpdateList([FromRoute]Guid listId, [FromBody] CheckList list)
+        {
+            try
+            {
+                await _listService.UpdateList(listId, list);
+                return Accepted($"api/v1/lists/{listId.ToString()}", await _listService.GetListById(listId));
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message, statusCode: 500);
+            }
+        }
+
         [ProducesResponseType(typeof(CheckList), StatusCodes.Status201Created)]
         //[ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPost]
