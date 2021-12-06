@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -75,7 +76,7 @@ namespace Checkme.BL
 
         public async Task<CheckList> GetListById(Guid id)
         {
-            var tempList = _blobStorage.GetResource<CheckList>(id.ToString());
+            var tempList = _blobStorage.GetResource<CheckList>($"checkme_{id}".ToString());
             if (Lists.ContainsKey(id))
             {
                 return Lists[id];
@@ -201,7 +202,7 @@ namespace Checkme.BL
             {
                 if (id != listId)
                     return;
-                stream.WriteAsync(Encoding.UTF8.GetBytes($"data: {System.Text.Json.JsonSerializer.Serialize(Lists[id])}\n\n")).AsTask().Wait();
+                stream.WriteAsync(Encoding.UTF8.GetBytes($"data: {System.Text.Json.JsonSerializer.Serialize(Lists[id],new JsonSerializerOptions {PropertyNamingPolicy = new LowerCaseNamingPolicy() })}\n\n")).AsTask().Wait();
                 stream.FlushAsync().Wait();
             }
 
