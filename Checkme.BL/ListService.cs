@@ -226,7 +226,8 @@ namespace Checkme.BL
 
         public async Task PersistList(CheckList list, string listId)
         {
-            await _blobStorage.SaveBlob(list, $"checkme_{listId}");
+            //await _blobStorage.SaveBlob(list, $"checkme_{listId}");
+            await _blobStorage.SaveBlob(list, listId.ToString());
         }
 
         public async  Task UpdateList(Guid listId, CheckList list)

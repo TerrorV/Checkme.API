@@ -21,10 +21,13 @@ namespace Checkme.DAL.Azure
     {
         private ILogger<BlobStorageRepo> _logger;
         private Config _configuration;
+        private BlobContainerClient _cloudBlobContainer;
         public BlobStorageRepo(Config configuration, ILogger<BlobStorageRepo> logger)
         {
             _configuration = configuration;
             _logger = logger;
+            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration.ConnectionString);
+            _cloudBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.TypeId);
         }
 
         public async Task<IEnumerable<string>> GetAllResourceIds()
@@ -32,10 +35,8 @@ namespace Checkme.DAL.Azure
             //ass.Sas.
             ////asb.BlobClient blobClient = asb.
             //CloudStorageAccount storageAccount = LoadAccount();
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration.ConnectionString);
-            // Create a container called 'quickstartblobs' and append a GUID value to it to make the name unique. 
-            BlobContainerClient cloudBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.TypeId);
-            if (!cloudBlobContainer.Exists())
+            
+            if (!_cloudBlobContainer.Exists())
             {
                 return new string[0];
             }
@@ -52,7 +53,7 @@ namespace Checkme.DAL.Azure
 
             ////cloudBlobContainer.per SetPermissions(permissions);
 
-            var list = cloudBlobContainer.GetBlobs();
+            var list = _cloudBlobContainer.GetBlobs();
 
             return list.Select(item => item.Name);
         }
@@ -74,9 +75,8 @@ namespace Checkme.DAL.Azure
 
         public async Task<T> GetResource<T>(string resourceId)
         {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration.ConnectionString);
-            BlobContainerClient cloudBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.TypeId);
-            if (!cloudBlobContainer.Exists())
+            
+            if (!_cloudBlobContainer.Exists())
             {
                 return default(T);
             }
@@ -93,7 +93,7 @@ namespace Checkme.DAL.Azure
 
             ////cloudBlobContainer.SetPermissions(permissions);
 
-            var item = cloudBlobContainer.GetBlobClient(resourceId);
+            var item = _cloudBlobContainer.GetBlobClient(resourceId);
             var result = await item.DownloadStreamingAsync();
 
             var content = new StreamReader(result.Value.Content, Encoding.UTF8).ReadToEnd();
@@ -102,12 +102,10 @@ namespace Checkme.DAL.Azure
 
         public async Task<string> SaveBlob<T>(T resource, string resourceId)
         {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration.ConnectionString);
-            BlobContainerClient cloudBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.TypeId);
 
             try
             {
-                cloudBlobContainer.CreateIfNotExists();
+                _cloudBlobContainer.CreateIfNotExists();
 
                 ////// Set the permissions so the blobs are public. 
                 ////BlobContainerPermissions permissions = new BlobContainerPermissions
@@ -123,7 +121,7 @@ namespace Checkme.DAL.Azure
                 // Get a reference to the blob address, then upload the file to the blob.
                 // Use the value of localFileName for the blob name.
                 //string reference = "Checkme" + Guid.NewGuid().ToString() + Path.GetExtension(resource.Filename);
-                var blob = cloudBlobContainer.GetBlobClient(resourceId);
+                var blob = _cloudBlobContainer.GetBlobClient(resourceId);
 
                 var response = await blob.UploadAsync(new MemoryStream(Encoding.UTF8.GetBytes(result)),
                                         new BlobHttpHeaders()
@@ -149,17 +147,14 @@ namespace Checkme.DAL.Azure
 
         public async Task<string> SaveBlobStream(string resourceId, Stream stream)
         {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration.ConnectionString);
-            BlobContainerClient cloudBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.TypeId);
-
             string sourceFile = null;
             string destinationFile = null;
 
             try
             {
-                cloudBlobContainer.CreateIfNotExists();
+                _cloudBlobContainer.CreateIfNotExists();
 
-                var blob = cloudBlobContainer.GetBlobClient(resourceId);
+                var blob = _cloudBlobContainer.GetBlobClient(resourceId);
                 await blob.UploadAsync(stream);
                 return blob.Uri.AbsoluteUri;
             }
@@ -177,18 +172,17 @@ namespace Checkme.DAL.Azure
 
         public string SaveBlobFromFile(string path)
         {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration.ConnectionString);
-            BlobContainerClient cloudBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.TypeId);
+
             string sourceFile = null;
             string destinationFile = null;
 
             try
             {
-                cloudBlobContainer.CreateIfNotExists();
+                _cloudBlobContainer.CreateIfNotExists();
 
                 // Use the value of localFileName for the blob name.
                 string reference = Guid.NewGuid().ToString() + Path.GetExtension(path);
-                var blob = cloudBlobContainer.GetBlobClient(reference);
+                var blob = _cloudBlobContainer.GetBlobClient(reference);
                 ////cloudBlockBlob.UploadFromByteArray(resource.Content, 0, resource.Content.Length);
                 blob.Upload(File.Open(path,FileMode.Open));
                 ////cloudBlockBlob.UploadFromByteArray(resource.Content, 0, resource.Content.Length);
