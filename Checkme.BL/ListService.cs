@@ -227,14 +227,40 @@ namespace Checkme.BL
 
         public async Task PersistList(CheckList list, string listId)
         {
-            _blobStorage.SaveBlob(list, $"checkme_{listId}");
+            //await _blobStorage.SaveBlob(list, $"checkme_{listId}");
+            await _blobStorage.SaveBlob(list, listId.ToString());
         }
 
         public async  Task UpdateList(Guid listId, CheckList list)
         {
+            CheckList newList = MergeList(Lists[listId], list);
             await PersistList(list, listId.ToString());
 
             OnListUpdated?.Invoke(null, listId);
+        }
+
+        public CheckList MergeList(CheckList oldList, CheckList newList)
+        {
+            if (oldList.Timestamp > newList.Timestamp)
+            {
+                var tempList = new CheckList();
+                tempList.Done = new List<string>();
+                tempList.Outstanding = new List<string>();
+                tempList.Done.AddRange(oldList.Done);
+                tempList.Outstanding.AddRange(oldList.Outstanding);
+                tempList.Id = oldList.Id;
+                tempList.Done.AddRange(newList.Done.Where(e => !oldList.Done.Contains(e) && !oldList.Outstanding.Contains(e)));
+                tempList.Outstanding.AddRange(newList.Outstanding.Where(e => !oldList.Outstanding.Contains(e) && !oldList.Done.Contains(e)));
+                tempList.Timestamp = DateTime.UtcNow;
+
+                return tempList;
+            }
+            else
+            {
+                return newList;
+            }
+
+            //throw new NotImplementedException();
         }
     }
 }
