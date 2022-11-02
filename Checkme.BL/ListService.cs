@@ -6,7 +6,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,13 +14,17 @@ namespace Checkme.BL
     public class ListService : IListService
     {
         public static ConcurrentDictionary<Guid, CheckList> Lists { get; private set; }
+        public static ConcurrentDictionary<Guid, List<System.IO.Stream>> ListSubscribers { get; private set; }
         private IBlobStorageRepo _blobStorage;
         event EventHandler<Guid> OnListUpdated;
 
         public ListService(IBlobStorageRepo blobStorage)
         {
             Lists = new ConcurrentDictionary<Guid, CheckList>();
+            ListSubscribers = new ConcurrentDictionary<Guid, List<System.IO.Stream>>();
             _blobStorage = blobStorage;
+            OnListUpdated += ListUpdateHandler;
+
         }
 
         public async Task AddList(CheckList list)
@@ -31,6 +34,8 @@ namespace Checkme.BL
             {
                 throw new ItemExistsException("Item already exists");
             }
+
+            ListSubscribers.TryAdd(list.Id, new List<System.IO.Stream>());
 
             await _blobStorage.AddResource(list, list.Id.ToString());
             OnListUpdated?.Invoke(null, list.Id);
@@ -76,7 +81,7 @@ namespace Checkme.BL
 
         public async Task<CheckList> GetListById(Guid id)
         {
-            var tempList = _blobStorage.GetResource<CheckList>($"checkme_{id}".ToString());
+            var tempList = _blobStorage.GetResource<CheckList>(id.ToString());
             if (Lists.ContainsKey(id))
             {
                 return Lists[id];
@@ -84,6 +89,7 @@ namespace Checkme.BL
             else if (tempList != null)
             {
                 Lists[id] = await tempList;
+                ListSubscribers.TryAdd(id, new List<System.IO.Stream>());
                 return Lists[id];
             }
 
@@ -105,6 +111,10 @@ namespace Checkme.BL
             foreach (var item in tempLists)
             {
                 Lists[item.Id] = item;
+                if (!ListSubscribers.ContainsKey(item.Id))
+                {
+                    ListSubscribers[item.Id] = new List<System.IO.Stream>();
+                }
             }
         }
 
@@ -196,22 +206,35 @@ namespace Checkme.BL
             await PersistList(Lists[listId], listId.ToString());
             OnListUpdated?.Invoke(null, listId);
         }
+
+        void ListUpdateHandler(object? sender, Guid id)
+        {
+            try
+            {
+                var subs = ListSubscribers[id];
+
+                foreach (var stream in subs)
+                {
+                    stream.WriteAsync(Encoding.UTF8.GetBytes($"data: {System.Text.Json.JsonSerializer.Serialize(Lists[id],new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy= new LowerCaseNamingPolicy() })}\n\n")).AsTask().Wait();
+                    stream.FlushAsync().Wait();
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
+
         public async Task SubscribeClient(Guid listId, System.IO.Stream stream)
         {
-            void ListUpdateHandler(object? sender, Guid id)
-            {
-                if (id != listId)
-                    return;
-                stream.WriteAsync(Encoding.UTF8.GetBytes($"data: {System.Text.Json.JsonSerializer.Serialize(Lists[id],new JsonSerializerOptions {PropertyNamingPolicy = new LowerCaseNamingPolicy() })}\n\n")).AsTask().Wait();
-                stream.FlushAsync().Wait();
-            }
+            ListSubscribers[listId].Add(stream);
+            ////OnListUpdated += ListUpdateHandler;
+            ////OnListUpdated += (sender, id) =>
+            ////{
+            ////    ListUpdateHandler(sender, id);
 
-            OnListUpdated += ListUpdateHandler;
-            OnListUpdated += (sender, id) =>
-            {
-                ListUpdateHandler(sender, id);
-
-            };
+            ////};
 
             await Task.Run(() =>
             {
@@ -231,7 +254,7 @@ namespace Checkme.BL
             await _blobStorage.SaveBlob(list, listId.ToString());
         }
 
-        public async  Task UpdateList(Guid listId, CheckList list)
+        public async Task UpdateList(Guid listId, CheckList list)
         {
             CheckList newList = MergeList(Lists[listId], list);
             await PersistList(list, listId.ToString());
