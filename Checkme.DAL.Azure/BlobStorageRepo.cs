@@ -22,12 +22,15 @@ namespace Checkme.DAL.Azure
         private ILogger<BlobStorageRepo> _logger;
         private Config _configuration;
         private BlobContainerClient _cloudBlobContainer;
+        private BlobContainerClient _cloudResourceBlobContainer;
+
         public BlobStorageRepo(Config configuration, ILogger<BlobStorageRepo> logger)
         {
             _configuration = configuration;
             _logger = logger;
             BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration.ConnectionString);
             _cloudBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.TypeId);
+            _cloudResourceBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.ResourceTypeId);
         }
 
         public async Task<IEnumerable<string>> GetAllResourceIds()
@@ -152,9 +155,9 @@ namespace Checkme.DAL.Azure
 
             try
             {
-                _cloudBlobContainer.CreateIfNotExists();
+                _cloudResourceBlobContainer.CreateIfNotExists();
 
-                var blob = _cloudBlobContainer.GetBlobClient(resourceId);
+                var blob = _cloudResourceBlobContainer.GetBlobClient(resourceId);
                 await blob.UploadAsync(stream);
                 return blob.Uri.AbsoluteUri;
             }
