@@ -150,7 +150,7 @@ namespace Checkme.DAL.Azure
         public async Task<string> SaveBlobStream(string resourceId, Stream stream)
         {
             BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration.ConnectionString);
-            BlobContainerClient cloudBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.TypeId);
+            BlobContainerClient cloudBlobContainer = blobServiceClient.GetBlobContainerClient(_configuration.ResourceTypeId);
 
             string sourceFile = null;
             string destinationFile = null;

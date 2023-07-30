@@ -33,10 +33,12 @@ namespace Checkme.API
             services.AddControllers();
             services.AddSingleton<IListService, ListService>();
             services.AddSingleton<IBlobStorageRepo, BlobStorageRepo>();
+            services.AddSingleton<IResourceService, ResourceService>();
             services.AddSingleton<Config>(new Config()
             {
                 ConnectionString = Configuration.GetConnectionString("PersistenceConnectionString") ,
-                TypeId = "checkme"
+                TypeId = "checkme",
+                ResourceTypeId="checkme-binary"
             });
             services.AddSwaggerDocument();
             services.AddCors(options => options.AddDefaultPolicy(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
